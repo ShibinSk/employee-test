@@ -113,10 +113,18 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const authMiddleware = require("./middleware/authMiddleware"); // JWT Middleware
 const FormSubmission = require("../models/FormSubmission");
-
+const multer = require("multer");
+const path = require("path");
 require("dotenv").config();
 
 const router = express.Router();
+const storage = multer.diskStorage({
+  destination: "./uploads",
+  filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+const upload = multer({ storage });
 
 // Signup Route
 router.post("/signup", async (req, res) => {
@@ -144,18 +152,20 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-router.post("/submit", async (req, res) => {
-  console.log(req.body.body.formData, 'req.body');
+router.post("/submit", upload.single("file"), async (req, res) => {
+  console.log(req.body, 'req.file');
+  
+  // console.log(req.body.body.formData, 'req.body');
   const { captchaToken, ...formData } = req.body;  // Extract captchaToken from the request body
 const RECAPTCHA_SECRET_KEY = "6Ld2ugIrAAAAAE-3Gl2q06VqDGPq0vKSgCSsx7aI"; // Replace with your secret key
 
   // Check if captchaToken exists
-  if (!req.body.body.captchaToken) {
+  if (!req.body?.captchaToken) {
       return res.status(400).json({ message: "CAPTCHA token is missing." });
   }
 
   // Verification URL for Google reCAPTCHA
-  const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET_KEY}&response=${req.body.body.captchaToken}`;
+  const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET_KEY}&response=${req.body?.captchaToken}`;
 
   try {
       // Verify the CAPTCHA token with Google's API using GET instead of POST
@@ -168,7 +178,7 @@ const RECAPTCHA_SECRET_KEY = "6Ld2ugIrAAAAAE-3Gl2q06VqDGPq0vKSgCSsx7aI"; // Repl
       }
 
       // If CAPTCHA is successful, save the form submission
-      const newEntry = new FormSubmission(req.body.body.formData);
+      const newEntry = new FormSubmission(req.body.formData);
       await newEntry.save();
 
       // Send a success response

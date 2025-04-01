@@ -11,6 +11,8 @@ const FormSubmissionSchema = new mongoose.Schema({
   address: String,
   department: String,
   resume: String, // This should be a file path if stored in disk
+  filename: String,
+  fileUrl: String,
 });
 
 const FormSubmission = mongoose.model("FormSubmission", FormSubmissionSchema);

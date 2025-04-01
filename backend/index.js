@@ -40,7 +40,6 @@ app._router.stack.forEach((middleware) => {
       console.log(`Registered route: ${middleware.route.stack[0].method.toUpperCase()} ${middleware.route.path}`);
     }
   });
-
 ////////
 
 app.listen(PORT, () => {
